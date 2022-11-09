@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include "graph.h"
-#include "salesman_seq.h"
 
 static int *visited_vertices;
 static int *explored_vertices;
-static int found_min_path = 0;
 
-static void tsq_sequential(graph *, int);
+int tsq_sequential(graph *, int);
 
 int
 main(int argc, char **argv)
@@ -19,7 +17,7 @@ main(int argc, char **argv)
 	int start_v = strol(argv[1], NULL, 10);
 	FILE *f     = fopen(argv[2], "r");
 	if (f == NULL) {
-		fprintf(stderr, "%s: couldn't open file '%s'\n", argv[0], argv[1]);
+		fprintf(stderr, "%s: couldn't open file '%s'\n", argv[0], argv[2]);
 		exit(1);
 	}
 
@@ -28,10 +26,14 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s: couldn't read the graph\n", argv[2]);
 		exit(1);
 	}
+	if ( start_v >= g->nvertices || start_v <= 0 ) {
+		fprintf(stderr, "%s: vertex '%d' isn't correct\n", argv[0], argv[1]);
+		exit(1);
+	}
 
 	explored_vertices = malloc(sizeof(int) * g->nvertices);
 	visited_vertices  = malloc(sizeof(int) * g->nvertices);
-	fprintf(stdout, "Min path: %d\n", tsp_sequential(g, start_v, found_min_path));
+	fprintf(stdout, "Min path: %d\n", tsp_sequential(g, start_v, -1));
 	return 0;
 }
 
@@ -49,10 +51,11 @@ tsq_sequential(graph *g, int v, int min_path, int result_path)
 
 		if (!visited[y]) {
 			min_path += enode->w;
+
 			if ( min_path < result_path || result_path == -1 ) {
 				tsq_sequential(g, y, min_path, result_path);
 			} else {
-				// fprintf(stdout, "giving up at %d\n", v);
+				//fprintf(stdout, "giving up at %d\n", v);
 				return 0;
 			}
 		}
