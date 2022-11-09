@@ -62,11 +62,8 @@ tsq_sequential(graph *g, int start_v, int v, int min_path, int hop_count)
 				visited[y] = 0;
 			}
 		} else if ( y == start_v && hop_count == (g->nvertices - 1) ) {
-			if ( (min_path + enode->w) < result_path || result_path == - 1 ) {
+			if ( (min_path + enode->w) < result_path || result_path == - 1 )
 				result_path = min_path;
-			} else {
-				fprintf(stdout, "Not visited\n");
-			}
 		}
 
 		enode = enode->next;
