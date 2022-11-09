@@ -3,11 +3,13 @@
 #endif /* GRAPH_H */
 
 // Representation of an undirected edge (x - y)
-typedef struct {
+struct edgenode {
 	int y;
-	int weight;
-	struct edgnode *next;
-} edgenode;
+	int w;
+	struct edgenode *next;
+};
+
+typedef struct edgenode edgenode;
 
 // Representation of a graph
 typedef struct {
