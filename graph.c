@@ -53,7 +53,7 @@ display_graph(graph *g)
 	edgenode *enode;
 
 	fprintf(stdout, "nvertices: %d, nedges: %d\n", g->nvertices, g->nedges);
-	for (i = 0; i <= g->nvertices; i++) {
+	for (i = 1; i <= g->nvertices; i++) {
 		fprintf(stdout, "%d\n", i);
 		enode = g->edges[i];
 

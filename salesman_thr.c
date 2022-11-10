@@ -1,18 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "graph.h"
-#include "salesman_seq.h"
+
 
 int
 main(int argc, char **argv)
 {
-	if (argc != 3) {
-		fprintf(stderr, "usage: salesman_seq <starting_vertex> <graph_file>\n");
+	if (argc != 4) {
+		fprintf(stderr, "usage: salesman_seq <starting_vertex> <nthreads> <graph_file>\n");
 		exit(1);
 	}
 
-	int start_v = strtol(argv[1], NULL, 10);
-	FILE *f     = fopen(argv[2], "r");
+	start_v  = strtol(argv[1], NULL, 10);
+	nthreads = strtol(argv[1], NULL, 10);
+
+	FILE *f = fopen(argv[2], "r");
 	if (f == NULL) {
 		fprintf(stderr, "%s: couldn't open file '%s'\n", argv[0], argv[2]);
 		exit(1);
@@ -30,20 +32,19 @@ main(int argc, char **argv)
 	}
 
 	visited = malloc(sizeof(int) * g.nvertices);
-	display_graph(&g);
-	tsq_sequential(&g, start_v, start_v, 0, 0);
+	gen_tasks(graph *g, int v)
+	tsq_threads(&g);
 
-	fprintf(stdout, "Min path: %d\n", result_path);
 	return 0;
 }
 
 void
-tsq_sequential(graph *g, int start_v, int v, int min_path, int hop_count)
+gen_tasks(graph *g, int v, int *iqueue, int hop_count)
 {
 	int y;
 	edgenode *enode = NULL;
 
-	// starting vertex should be marked visited
+	// Starting vertex should be marked visited
 	visited[v] = 1;
 
 	enode = g->edges[v];
@@ -51,15 +52,33 @@ tsq_sequential(graph *g, int start_v, int v, int min_path, int hop_count)
 		y = enode->y;
 
 		if ( !visited[y] ) {
-			if ( (min_path + enode->w) < result_path || result_path == -1 ) {
-				tsq_sequential(g, start_v, y, (min_path + enode->w), hop_count + 1);
-				visited[y] = 0;
-			}
+			sk.stack[++sk.size] = y;
+			visited[y]          = 0;
 		} else if ( y == start_v && hop_count == (g->nvertices - 1) ) {
-			if ( (min_path + enode->w) < result_path || result_path == -1)
-				result_path = min_path;
+			sk.stack[++sk.size] = y;
+			enqueue(sk.stack, sk.size);
 		}
 
 		enode = enode->next;
 	}
+
+	sk.size--;
+}
+
+int *
+dequeue(queue qu)
+{
+	return qu.queue[qu.size--];
+}
+
+int
+enqueue(queue qu, )
+{
+	
+	return 1;
+}
+
+void
+tsq_threads(graph *g)
+{
 }
