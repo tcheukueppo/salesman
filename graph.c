@@ -1,40 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "graph.h"
 
-int
-read_graph(graph *g, FILE *fh)
+static enode *
+_find_reflect(graph *g, int i, int v)
 {
-	// PROTOCOL SPECIFICATION for STDIN
-	// file_graph.gh
-	// ---------------------
-	// nb_vertices
-	// vertex_x tail_y weight
-	// ...      ...    ...
+	edgenode *enode = g->edges[i];
 
-	int x, y, w, nvertices = 0;
-	char buf[BUFSIZ];
-
-	if (fgets(buf, BUFSIZ, fh) == NULL)
-		return 1;
-
-	g->nvertices = strtol(buf, NULL, 10);
-	g->edges     = malloc(g->nvertices * sizeof(*(g->edges)));
-
-	while (fgets(buf, BUFSIZ, fh)) {
-		x = strtol(strtok(buf, " "),  NULL, 10);
-		y = strtol(strtok(NULL, " "), NULL, 10);
-		w = strtol(strtok(NULL, " "), NULL, 10);
-		_insert_edge(g, x, y, w);
-		nvertices++;
+	while ( enode != NULL ) {
+		if (enode->y == v) break;
+		enode = enode->next;	
 	}
-	g->nedges /= 2;
 
-	return nvertices == g->nvertices ? 0 : 1;
+	return enode;
 }
 
-void
+static void
 _insert_edge(graph *g, int x, int y, int w)
 {
 	edgenode *enode = malloc(sizeof(edgenode));
@@ -44,6 +25,39 @@ _insert_edge(graph *g, int x, int y, int w)
 	enode->next = g->edges[x];
 	g->edges[x] = enode;
 	g->nedges++;
+}
+
+graph *
+gen_graph(int nv)
+{
+	int i, w, v = 1;
+	unsigned long seed = 1;
+
+	graph    *g;
+	edgenode *enode = NULL;
+
+	g->nvertices = nv;
+	while (v != nv + 1) {
+		// Generating edges for vertex `v'
+		for (i = 1; i <= nv; i++) {
+			if (i == v) continue;
+
+			enode = _find_reflect(g, i, v);
+			if (enode) {
+				w = enode->w;
+			} else {
+				// Update seed to produce different pseudo-random series
+				// each time `rand' runs.
+				srand(seed++);
+				w = (int) rand(100);
+				g->nedges++;
+			}
+			_insert_edge(g, v, i, w);
+		}
+		v++;
+	}
+
+	return g;
 }
 
 void

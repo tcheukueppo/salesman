@@ -18,6 +18,7 @@ typedef struct {
 	int nvertices;
 } graph;
 
-void _insert_edge(graph *g, int x, int y, int w);
-int  read_graph(graph *g, FILE *fh);
-void display_graph(graph *g);
+
+// Function prototypes
+void    display_graph(graph *g);
+graph*  gen_graph(int);
