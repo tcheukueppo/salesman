@@ -20,8 +20,8 @@ _insert_edge(graph *g, int x, int y, int w)
 {
 	edgenode *enode = malloc(sizeof(edgenode));
 
-	enode->w    = w;
 	enode->y    = y;
+	enode->w    = w;
 	enode->next = g->edges[x];
 	g->edges[x] = enode;
 }
@@ -32,13 +32,14 @@ gen_graph(int nv)
 	int i, w, v = 1;
 	unsigned long seed = 1;
 
-	graph    *g;
 	edgenode *enode = NULL;
+	graph    *g     = malloc(sizeof(graph));
 
 	g->nvertices = nv++;
+	g->edges     = malloc( nv * sizeof(*(g->edges)) );
 	while (v != nv) {
 		// Generating edges for vertex `v'
-		for (i = 1; i <= nv; i++) {
+		for (i = 1; i <= (nv - 1); i++) {
 			if (i == v) continue;
 
 			enode = _find_reflect(g, i, v);
@@ -48,7 +49,7 @@ gen_graph(int nv)
 				// Update seed to produce different pseudo-random series
 				// each time `rand' runs.
 				srand(seed++);
-				w = ( (int)rand() % 99) + 1;
+				w = ((int)rand() % 99) + 1;
 				g->nedges++;
 			}
 			_insert_edge(g, v, i, w);

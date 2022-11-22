@@ -21,6 +21,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	fprintf(stdout, "works?\n");
 	graph *g = gen_graph(nv);
 	display_graph(g);
 
