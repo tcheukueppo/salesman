@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "graph.h"
 
-static enode *
+static edgenode *
 _find_reflect(graph *g, int i, int v)
 {
 	edgenode *enode = g->edges[i];
@@ -24,7 +24,6 @@ _insert_edge(graph *g, int x, int y, int w)
 	enode->y    = y;
 	enode->next = g->edges[x];
 	g->edges[x] = enode;
-	g->nedges++;
 }
 
 graph *
@@ -36,8 +35,8 @@ gen_graph(int nv)
 	graph    *g;
 	edgenode *enode = NULL;
 
-	g->nvertices = nv;
-	while (v != nv + 1) {
+	g->nvertices = nv++;
+	while (v != nv) {
 		// Generating edges for vertex `v'
 		for (i = 1; i <= nv; i++) {
 			if (i == v) continue;
@@ -49,7 +48,7 @@ gen_graph(int nv)
 				// Update seed to produce different pseudo-random series
 				// each time `rand' runs.
 				srand(seed++);
-				w = (int) rand(100);
+				w = ( (int)rand() % 99) + 1;
 				g->nedges++;
 			}
 			_insert_edge(g, v, i, w);

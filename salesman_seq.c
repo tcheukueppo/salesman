@@ -7,7 +7,7 @@ static int *visited;
 static int result_cost = -1;
 
 static void
-depth_first_search(graph *g, int start_v, int v, int cur_cost, int hop_count)
+depth_search(graph *g, int start_v, int v, int cur_cost, int hop_count)
 {
 	int y;
 	edgenode *enode = g->edges[v];
@@ -21,7 +21,7 @@ depth_first_search(graph *g, int start_v, int v, int cur_cost, int hop_count)
 
 			if ( new_cost = (cur_cost + enode->w) < result_cost 
 			||  result_cost == -1) {
-				tsq_sequential(g, start_v, y, new_cost, hop_count + 1);
+				depth_search(g, start_v, y, new_cost, hop_count + 1);
 				visited[y] = 0;
 			}
 		} else if (y == start_v && hop_count == (g->nvertices - 1)) {
@@ -40,7 +40,7 @@ int
 tsp_sequential(graph *g, int start_v)
 {
 	visited = malloc(sizeof(int) * g->nvertices);
-	depth_first_search(g, start_v, start_v, 0, 0)
+	depth_search(g, start_v, start_v, 0, 0);
 
 	return result_cost;
 }
