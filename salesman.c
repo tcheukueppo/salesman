@@ -3,7 +3,7 @@
 
 #include "graph.h"
 #include "salesman_seq.h"
-//#include "salesman_thr.h"
+#include "salesman_thr.h"
 
 int
 main(int argc, char **argv)
@@ -21,15 +21,14 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	fprintf(stdout, "works?\n");
 	graph *g = gen_graph(nv);
 	display_graph(g);
 
 	int min_cost = tsp_sequential(g, start_v);
 	fprintf(stdout, "Sequential, Min path: %d\n", min_cost);
 
-	//min_cost = tsq_threaded(g, start_v);
-	//fprintf(stdout, "Multithreaded, Min path: %d\n", min_cost);
+	min_cost = tsq_threaded(g, start_v);
+	fprintf(stdout, "Multithreaded, Min path: %d\n", min_cost);
 
 	return 0;
 }

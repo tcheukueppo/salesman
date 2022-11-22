@@ -12,17 +12,17 @@ depth_search(graph *g, int start_v, int v, int cur_cost, int hop_count)
 	int y;
 	edgenode *enode = g->edges[v];
 
-	visited[v] = 1;
+	visited[v - 1] = 1;
 	while (enode != NULL) {
 		y = enode->y;
 
-		if (!visited[y]) {
+		if (!visited[y - 1]) {
 			int new_cost;
 
-			if ( new_cost = (cur_cost + enode->w) < result_cost 
+			if ((new_cost = (cur_cost + enode->w)) < result_cost 
 			||  result_cost == -1) {
 				depth_search(g, start_v, y, new_cost, hop_count + 1);
-				visited[y] = 0;
+				visited[y - 1] = 0;
 			}
 		} else if (y == start_v && hop_count == (g->nvertices - 1)) {
 

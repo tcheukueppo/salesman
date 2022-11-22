@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "graph.h"
 
 static edgenode *
@@ -7,7 +8,7 @@ _find_reflect(graph *g, int i, int v)
 {
 	edgenode *enode = g->edges[i];
 
-	while ( enode != NULL ) {
+	while (enode != NULL) {
 		if (enode->y == v) break;
 		enode = enode->next;	
 	}
@@ -30,7 +31,7 @@ graph *
 gen_graph(int nv)
 {
 	int i, w, v = 1;
-	unsigned long seed = 1;
+	unsigned long seed = time(0);
 
 	edgenode *enode = NULL;
 	graph    *g     = malloc(sizeof(graph));
@@ -49,7 +50,7 @@ gen_graph(int nv)
 				// Update seed to produce different pseudo-random series
 				// each time `rand' runs.
 				srand(seed++);
-				w = ((int)rand() % 99) + 1;
+				w = ((int)rand() % 10) + 1;
 				g->nedges++;
 			}
 			_insert_edge(g, v, i, w);

@@ -1,5 +1,5 @@
-#ifndef _SALESMAN_SEQ_
-#define _SALESMAN_SEQ_
+#ifndef _SALESMAN_THR_
+#define _SALESMAN_THR_
 
 #define STACK_SIZE 256
 
@@ -30,6 +30,6 @@ int start_v;
 void dequeue(queue);
 void enqueue(queue, int *, int);
 void gen_tasks(graph *, int);
-void tsq_threads(graph *);
+void tsp_threads(graph *);
 
 #endif
