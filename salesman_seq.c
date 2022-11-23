@@ -42,5 +42,6 @@ tsp_sequential(graph *g, int start_v)
 	visited = malloc(sizeof(int) * g->nvertices);
 	depth_search(g, start_v, start_v, 0, 0);
 
+	free(visited);
 	return result_cost;
 }

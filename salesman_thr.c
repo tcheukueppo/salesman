@@ -1,84 +1,117 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
+
 #include "graph.h"
+#include "salesman_thr.h"
 
+#define STACK_SIZE 256
 
-int
-main(int argc, char **argv)
+typedef struct {
+	int size;
+	int arr[STACK_SIZE][2];
+} stack;
+
+static int result_cost;
+static int *visited;
+static queue qu;
+
+// -- Prototypes
+// Generate tasks
+static void dequeue(queue);
+static void enqueue(queue *, int **, int);
+static void gen_tasks(graph *, int);
+
+struct TODO {
+	int result_cost;
+	pthread_mutex_t cost_locker;
+};
+
+// Well, idk, fact() isn't in math.h where is it?
+static int
+fact(int n)
 {
-	if (argc != 4) {
-		fprintf(stderr, "usage: salesman_seq <starting_vertex> <nthreads> <graph_file>\n");
-		exit(1);
-	}
-
-	start_v  = strtol(argv[1], NULL, 10);
-	nthreads = strtol(argv[1], NULL, 10);
-
-	FILE *f = fopen(argv[2], "r");
-	if (f == NULL) {
-		fprintf(stderr, "%s: couldn't open file '%s'\n", argv[0], argv[2]);
-		exit(1);
-	}
-
-	graph g;
-	g.nedges = 0;
-	if (!read_graph(&g, f)) {
-		fprintf(stderr, "%s: couldn't read the graph\n", argv[2]);
-		exit(1);
-	}
-	if ( start_v >= g.nvertices || start_v <= 0 ) {
-		fprintf(stderr, "%s: vertex '%d' isn't correct\n", argv[0], argv[1]);
-		exit(1);
-	}
-
-	visited = malloc(sizeof(int) * g.nvertices);
-	gen_tasks(graph *g, int v)
-	tsq_threads(&g);
-
-	return 0;
+	if ( n == 0 ) return 1;
+	return n * fact(n - 1);
 }
 
-void
-gen_tasks(graph *g, int v, int *iqueue, int hop_count)
+static void
+enqueue(queue *qu, stack sk)
 {
-	int y;
-	edgenode *enode = NULL;
+	qu->queue[qu->size++] = sk;
+}
 
-	// Starting vertex should be marked visited
-	visited[v] = 1;
+static int **
+dequeue(queue *qu)
+{
+	return qu->size != 0 ? qu->queue[qu->size--] : NULL;
+}
 
-	enode = g->edges[v];
-	while ( enode != NULL ) {
+static queue *
+_gen_tasks(graph *g, int start_v, int v, int hop_count)
+{
+	static stack sk;
+
+	visited[v - 1] = 1;
+	egdenode *enode = g->edges[v];
+	while (enode != NULL) {
 		y = enode->y;
 
-		if ( !visited[y] ) {
-			sk.stack[++sk.size] = y;
-			visited[y]          = 0;
-		} else if ( y == start_v && hop_count == (g->nvertices - 1) ) {
-			sk.stack[++sk.size] = y;
-			enqueue(sk.stack, sk.size);
+		if (!visited[y - 1]) {
+
+			sk.arr[++sk.size][0] = y;
+			sk.arr[++sk.size][1] = w;
+			_gen_tasks(g, start_v, y, ++hop_count);
+			visited[y - 1] = 0;
+			sk.size--;
+
+		} else if (++hop_count == g->nvertices && y == start_v) {
+
+			sk.arr[++sk.size][0] = y;
+			sk.arr[++sk.size][1] = w;
+			enqueue(qu, sk);
 		}
 
 		enode = enode->next;
 	}
-
-	sk.size--;
 }
 
-int *
-dequeue(queue qu)
+queue *
+gen_tasks(graph *g, int start_v, int nv)
 {
-	return qu.queue[qu.size--];
+	visited   = malloc(nv * sizeof(int));
+	qu->queue = malloc(fact(nv - 1) * sizeof(int *));
+	return _gen_tasks(g, start_v);
 }
 
-int
-enqueue(queue qu, )
+/* Pretty print of the possible permutations(in other words, list the tasks) */
+void
+display_queue(queue *qu)
 {
-	
-	return 1;
+	int i;
+	for (i = 0; i < qu->size; i++) fprintf(stdout, "%-5d ", 1); 
+
+	for (i = 0; i < qu->queue[0].size; i++) {
+		int j;
+
+		/* Output vertices */
+		for (j = 0; j < qu->size; j++)
+			fprintf(stdout, "%-5d ", qu->queue[j].stack[i][0]);
+
+		fprintf(stdout, "\n");
+
+		/* Output weights */
+		for (j = 0; j < qu->size; j++)
+			fprintf(stdout, "|%-4d", qu->queue[j].stack[i][1]);
+	}
+
+	for (i = 0; i < qu->size; i++) fprintf(stdout, "%-5d ", 1); 
 }
 
 void
-tsq_threads(graph *g)
+tsp_threaded(graph *, int nv)
 {
+	visited = {0};
+	free(visited);
+	return;
 }

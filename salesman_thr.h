@@ -3,33 +3,13 @@
 
 #define STACK_SIZE 256
 
-struct stack {
-	int size = -1;
-	int stack[STACK_SIZE];
-};
-
-typedef struct stack stack;
-stack sk;
-
-struct queue {
+// Queue of tasks
+typedef struct {
 	int size = -1;
 	int **queue;
-};
+} queue;
 
-typedef struct queue queue;
-queue qu;
-
-int nthreads;
-int *costs;
-
-int *visited;
-int start_v;
-
-// -- Prototypes
-// Generate tasks
-void dequeue(queue);
-void enqueue(queue, int *, int);
-void gen_tasks(graph *, int);
-void tsp_threads(graph *);
+void tsp_threaded(graph *g);
+void gen_tasks(graph *g, int nthreads);
 
 #endif

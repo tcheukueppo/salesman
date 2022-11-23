@@ -30,5 +30,8 @@ main(int argc, char **argv)
 	min_cost = tsq_threaded(g, start_v);
 	fprintf(stdout, "Multithreaded, Min path: %d\n", min_cost);
 
+	free(g->edges);
+	free(g);
+
 	return 0;
 }
