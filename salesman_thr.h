@@ -3,13 +3,19 @@
 
 #define STACK_SIZE 256
 
+typedef struct {
+	int size;
+	int arr[STACK_SIZE][2];
+} stack;
+
 // Queue of tasks
 typedef struct {
-	int size = -1;
-	int **queue;
+	int size;
+	stack *queue;
 } queue;
 
-void tsp_threaded(graph *g);
-void gen_tasks(graph *g, int nthreads);
+queue *gen_tasks(graph *g, int start_v, int nv);
+void  tsp_threaded(queue *qu);
+void  display_tasks(queue *qu);
 
 #endif

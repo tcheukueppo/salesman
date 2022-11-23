@@ -27,8 +27,10 @@ main(int argc, char **argv)
 	int min_cost = tsp_sequential(g, start_v);
 	fprintf(stdout, "Sequential, Min path: %d\n", min_cost);
 
-	min_cost = tsq_threaded(g, start_v);
-	fprintf(stdout, "Multithreaded, Min path: %d\n", min_cost);
+	queue *qu = gen_tasks(g, start_v, nv);
+	display_tasks(qu);
+	//min_cost = tsq_threaded(g, start_v);
+	//fprintf(stdout, "Multithreaded, Min path: %d\n", min_cost);
 
 	free(g->edges);
 	free(g);

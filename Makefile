@@ -1,5 +1,5 @@
 CC      = gcc
-OBJECTS = graph.o salesman.o salesman_seq.o
+OBJECTS = graph.o salesman.o salesman_seq.o salesman_thr.o
 
 salesman: $(OBJECTS)
 	${CC} -o salesman $(OBJECTS)
