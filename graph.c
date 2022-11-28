@@ -1,7 +1,50 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
+
 #include "graph.h"
+static void
+_insert_edge(graph *g, int x, int y, int w)
+{
+	edgenode *enode = malloc(sizeof(edgenode));
+
+	enode->y    = y;
+	enode->w    = w;
+	enode->next = g->edges[x];
+	g->edges[x] = enode;
+}
+
+int
+read_graph(graph *g, FILE *fh)
+{
+	// PROTOCOL SPECIFICATION for STDIN
+	// file_graph.gh
+	// ---------------------
+	// nb_vertices
+	// vertex_x tail_y weight
+	// ...      ...    ...
+
+	int x, y, w, nvertices = 0;
+	char buf[BUFSIZ];
+
+	if (fgets(buf, BUFSIZ, fh) == NULL)
+		return 1;
+
+	g->nvertices = strtol(buf, NULL, 10);
+	g->edges     = malloc(g->nvertices * sizeof(*(g->edges)));
+
+	while (fgets(buf, BUFSIZ, fh)) {
+		x = strtol(strtok(buf, " "),  NULL, 10);
+		y = strtol(strtok(NULL, " "), NULL, 10);
+		w = strtol(strtok(NULL, " "), NULL, 10);
+		_insert_edge(g, x, y, w);
+		nvertices++;
+	}
+	g->nedges /= 2;
+
+	return nvertices == g->nvertices ? 0 : 1;
+}
 
 static edgenode *
 _find_reflect(graph *g, int i, int v)
@@ -16,16 +59,6 @@ _find_reflect(graph *g, int i, int v)
 	return enode;
 }
 
-static void
-_insert_edge(graph *g, int x, int y, int w)
-{
-	edgenode *enode = malloc(sizeof(edgenode));
-
-	enode->y    = y;
-	enode->w    = w;
-	enode->next = g->edges[x];
-	g->edges[x] = enode;
-}
 
 graph *
 gen_graph(int nv)

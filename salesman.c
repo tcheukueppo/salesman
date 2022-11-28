@@ -1,39 +1,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "arg.h"
 #include "graph.h"
 #include "salesman_seq.h"
 #include "salesman_thr.h"
 
+#define VERSION 0.01
+
+/* Prototypes */
+void usage(const char *cmd);
+
+void
+usage(const char *cmd)
+{
+	fprintf(stderr, "usage: %s [ -f GRAPH_FILE |"
+	    " -g NUM_VERTICES ] [ -s START_VERTEX ] [ -v ]\n", cmd);
+	exit(1);
+}
+
 int
 main(int argc, char **argv)
 {
-	if (argc != 3) {
-		fprintf(stderr, "usage: salesman <starting_vertex> <nvertices>\n");
-		exit(1);
-	}
 
-	int start_v = strtol(argv[1], NULL, 10);
-	int nv      = strtol(argv[2], NULL, 10);
+	long int  sv = -1, nv = -1;
+	char *graph_file = NULL;
 
-	if (start_v > nv || start_v <= 0) {
-		fprintf(stderr, "%s: vertex '%d' isn't correct\n", argv[0], argv[1]);
-		exit(1);
-	}
+	/* Going to be automatically set via "arg.h" */
+	char *PROGNAME;
 
-	graph *g = gen_graph(nv);
-	display_graph(g);
-
-	int min_cost = tsp_sequential(g, start_v);
-	fprintf(stdout, "Sequential, Min path: %d\n", min_cost);
-
-	queue *qu = gen_tasks(g, start_v, nv);
-	display_tasks(qu);
-	//min_cost = tsq_threaded(g, start_v);
-	//fprintf(stdout, "Multithreaded, Min path: %d\n", min_cost);
-
-	free(g->edges);
-	free(g);
+	ARG {
+		case 'f':
+			graph_file = GET(usage(PROGNAME));
+			fprintf(stdout, "file: %s\n", graph_file);
+			break;
+		case 'g':
+			nv = strtol(GET(usage(PROGNAME)), NULL, 10);
+			fprintf(stdout, "nv: %d\n", nv);
+			break;
+		case 's':
+			sv = strtol(GET(usage(PROGNAME)), NULL, 10);
+			fprintf(stdout, "sv: %d\n", sv);
+			break;
+		case 'v':
+			fprintf(stdout, "salesman-%.2f, @uy1 licensed under GPL.\n", VERSION);
+			exit(0);
+		default:
+			usage(PROGNAME);
+	} GRA;
 
 	return 0;
 }

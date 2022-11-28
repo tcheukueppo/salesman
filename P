@@ -1,0 +1,76 @@
+
+
+
+
+
+
+
+
+Hello
+
+
+
+
+
+
+
+
+
+Sequencial
+-------------
+
+struct edgenode {
+	int y;
+	int w;
+	struct edgenode *next;
+};
+typedef struct edgenode edgenode;
+
+
+
+
+
+typedef struct {
+	edgenode **edges;
+	int nedges;
+	int nvertices;
+} graph;
+
+
+
+
+
+
+
+void    display_graph(graph *g);
+graph*  gen_graph(int);
+
+
+
+Multithread
+-----------
+
+typedef struct {
+	int size;
+	int arr[STACK_SIZE][2];
+} stack;
+
+
+
+
+
+typedef struct {
+	int size;
+	stack *queue;
+} queue;
+
+
+
+
+
+
+
+
+queue *gen_tasks(graph *g, int start_v);
+int   tsp_threaded(queue *qu, int nthreads);
+void  display_tasks(queue *qu);

@@ -21,4 +21,5 @@ typedef struct {
 
 // Function prototypes
 void    display_graph(graph *g);
+int     read_graph(graph *g, FILE *fh);
 graph*  gen_graph(int);

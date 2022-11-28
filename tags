@@ -1,0 +1,82 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/kueppo/projects/salesman/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	/p5.9.20220828.0/
+CC	Makefile	/^CC      = gcc$/;"	m
+Distributed computing	README.md	/^## Distributed computing$/;"	s	chapter:TSP - The Salesman Problem
+Example	README.md	/^### Example$/;"	S	section:TSP - The Salesman Problem""Sequential processing
+Format of the input file	README.md	/^#### Format of the input file$/;"	t	subsection:TSP - The Salesman Problem""Sequential processing""Usage
+GRAPH_H	graph.h	/^#define GRAPH_H$/;"	d
+OBJECTS	Makefile	/^OBJECTS = graph.o salesman.o salesman_seq.o salesman_thr.o$/;"	m
+STACK_SIZE	salesman_thr.h	/^#define STACK_SIZE /;"	d
+Sequential processing	README.md	/^## Sequential processing$/;"	s	chapter:TSP - The Salesman Problem
+TSP - The Salesman Problem	README.md	/^# TSP - The Salesman Problem$/;"	c
+Threads	README.md	/^## Threads$/;"	s	chapter:TSP - The Salesman Problem
+Usage	README.md	/^### Usage$/;"	S	section:TSP - The Salesman Problem""Sequential processing
+_SALESMAN_SEQ_	salesman_seq.h	/^#define _SALESMAN_SEQ_$/;"	d
+_SALESMAN_THR_	salesman_thr.h	/^#define _SALESMAN_THR_$/;"	d
+__anon0d749acd0108	graph.h	/^typedef struct {$/;"	s
+__anone9bc92dc0108	salesman_thr.h	/^typedef struct {$/;"	s
+__anone9bc92dc0208	salesman_thr.h	/^typedef struct {$/;"	s
+__anone9bc92dc0308	salesman_thr.h	/^typedef struct {$/;"	s
+_find_reflect	graph.c	/^_find_reflect(graph *g, int i, int v)$/;"	f	typeref:typename:edgenode *	file:
+_gen_tasks	salesman_thr.c	/^_gen_tasks(graph *g, int start_v, int v, int hop_count)$/;"	f	typeref:typename:void	file:
+_insert_edge	graph.c	/^_insert_edge(graph *g, int x, int y, int w)$/;"	f	typeref:typename:void	file:
+aint	salesman_thr.h	/^	int *aint;$/;"	m	struct:__anone9bc92dc0308	typeref:typename:int *
+arr	salesman_thr.h	/^	int arr[STACK_SIZE][2];$/;"	m	struct:__anone9bc92dc0108	typeref:typename:int[][2]
+build	README.md	/^### build$/;"	S	section:TSP - The Salesman Problem""Sequential processing
+clean	Makefile	/^clean:$/;"	t
+depth_search	salesman_seq.c	/^depth_search(graph *g, int start_v, int v, int cur_cost, int hop_count)$/;"	f	typeref:typename:void	file:
+dequeue	salesman_thr.c	/^dequeue(queue *qu)$/;"	f	typeref:typename:stack *	file:
+display_graph	graph.c	/^display_graph(graph *g)$/;"	f	typeref:typename:void
+display_tasks	salesman_thr.c	/^display_tasks(queue *qu)$/;"	f	typeref:typename:void
+edgenode	graph.h	/^struct edgenode {$/;"	s
+edgenode	graph.h	/^typedef struct edgenode edgenode;$/;"	t	typeref:struct:edgenode
+edges	graph.h	/^	edgenode **edges;$/;"	m	struct:__anon0d749acd0108	typeref:typename:edgenode **
+enqueue	salesman_thr.c	/^enqueue(queue *qu, stack sk)$/;"	f	typeref:typename:void	file:
+fact	salesman_thr.c	/^fact(int n)$/;"	f	typeref:typename:int	file:
+gen_graph	graph.c	/^gen_graph(int nv)$/;"	f	typeref:typename:graph *
+gen_tasks	salesman_thr.c	/^gen_tasks(graph *g, int start_v)$/;"	f	typeref:typename:queue *
+graph	graph.h	/^} graph;$/;"	t	typeref:struct:__anon0d749acd0108
+graph.o	Makefile	/^salesman.o salesman_seq.o salesman_thr.o graph.o: graph.c graph.h$/;"	t
+init_shared_var	salesman_thr.c	/^init_shared_var(int *ref)$/;"	f	typeref:typename:shared_var *	file:
+main	salesman.c	/^main(int argc, char **argv)$/;"	f	typeref:typename:int
+mutex_locker	salesman_thr.h	/^	pthread_mutex_t mutex_locker;$/;"	m	struct:__anone9bc92dc0308	typeref:typename:pthread_mutex_t
+nedges	graph.h	/^	int nedges;$/;"	m	struct:__anon0d749acd0108	typeref:typename:int
+next	graph.h	/^	struct edgenode *next;$/;"	m	struct:edgenode	typeref:struct:edgenode *
+nvertices	graph.h	/^	int nvertices;$/;"	m	struct:__anon0d749acd0108	typeref:typename:int
+qu	salesman_thr.c	/^static queue qu;$/;"	v	typeref:typename:queue	file:
+queue	salesman_thr.h	/^	stack *queue;$/;"	m	struct:__anone9bc92dc0208	typeref:typename:stack *
+queue	salesman_thr.h	/^} queue;$/;"	t	typeref:struct:__anone9bc92dc0208
+read_graph	graph.c	/^read_graph(graph *g, FILE *fh)$/;"	f	typeref:typename:int
+read_in_peace	salesman_thr.c	/^read_in_peace(shared_var *sv)$/;"	f	typeref:typename:int	file:
+result_cost	salesman_seq.c	/^static int result_cost = -1;$/;"	v	typeref:typename:int	file:
+result_cost	salesman_thr.c	/^static int result_cost;$/;"	v	typeref:typename:int	file:
+salesman	Makefile	/^salesman: $(OBJECTS)$/;"	t
+salesman.o	Makefile	/^salesman.o salesman_seq.o salesman_thr.o graph.o: graph.c graph.h$/;"	t
+salesman.o	Makefile	/^salesman.o salesman_seq.o: salesman_seq.c salesman_seq.h$/;"	t
+salesman.o	Makefile	/^salesman.o salesman_thr.o: salesman_thr.c salesman_thr.h$/;"	t
+salesman.o	Makefile	/^salesman.o: salesman.c$/;"	t
+salesman_seq.o	Makefile	/^salesman.o salesman_seq.o salesman_thr.o graph.o: graph.c graph.h$/;"	t
+salesman_seq.o	Makefile	/^salesman.o salesman_seq.o: salesman_seq.c salesman_seq.h$/;"	t
+salesman_thr.o	Makefile	/^salesman.o salesman_seq.o salesman_thr.o graph.o: graph.c graph.h$/;"	t
+salesman_thr.o	Makefile	/^salesman.o salesman_thr.o: salesman_thr.c salesman_thr.h$/;"	t
+shared_var	salesman_thr.h	/^} shared_var;$/;"	t	typeref:struct:__anone9bc92dc0308
+size	salesman_thr.h	/^	int size;$/;"	m	struct:__anone9bc92dc0108	typeref:typename:int
+size	salesman_thr.h	/^	int size;$/;"	m	struct:__anone9bc92dc0208	typeref:typename:int
+sk	salesman_thr.c	/^static stack sk;$/;"	v	typeref:typename:stack	file:
+stack	salesman_thr.h	/^} stack;$/;"	t	typeref:struct:__anone9bc92dc0108
+tsp_sequential	salesman_seq.c	/^tsp_sequential(graph *g, int start_v)$/;"	f	typeref:typename:int
+tsp_threaded	salesman_thr.c	/^tsp_threaded(queue *qu, int nthreads) {$/;"	f	typeref:typename:int
+visited	salesman_seq.c	/^static int *visited;$/;"	v	typeref:typename:int *	file:
+visited	salesman_thr.c	/^static int *visited;$/;"	v	typeref:typename:int *	file:
+w	graph.h	/^	int w;$/;"	m	struct:edgenode	typeref:typename:int
+write_in_peace	salesman_thr.c	/^write_in_peace(shared_var *sv, int new_value)$/;"	f	typeref:typename:void	file:
+y	graph.h	/^	int y;$/;"	m	struct:edgenode	typeref:typename:int

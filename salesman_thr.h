@@ -14,8 +14,13 @@ typedef struct {
 	stack *queue;
 } queue;
 
-queue *gen_tasks(graph *g, int start_v, int nv);
-void  tsp_threaded(queue *qu);
+typedef struct {
+	int *aint;
+	pthread_mutex_t mutex_locker;
+} shared_var;
+
+queue *gen_tasks(graph *g, int start_v);
+int   tsp_threaded(queue *qu, int nthreads);
 void  display_tasks(queue *qu);
 
 #endif
