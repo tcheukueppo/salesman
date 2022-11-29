@@ -20,6 +20,6 @@ typedef struct {
 
 
 // Function prototypes
-void    display_graph(graph *g);
-int     read_graph(FILE *fh);
-graph*  gen_graph(int);
+void   display_graph(graph *g);
+graph *read_graph(FILE *fh);
+graph *gen_graph(int);

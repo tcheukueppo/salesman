@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "graph.h"
+
 static void
 _insert_edge(graph *g, int x, int y, int w)
 {
@@ -15,8 +16,8 @@ _insert_edge(graph *g, int x, int y, int w)
 	g->edges[x] = enode;
 }
 
-int
-read_graph(graph *g, FILE *fh)
+graph *
+read_graph(FILE *fh)
 {
 	// PROTOCOL SPECIFICATION for STDIN
 	// file_graph.gh
@@ -28,8 +29,10 @@ read_graph(graph *g, FILE *fh)
 	int x, y, w, nvertices = 0;
 	char buf[BUFSIZ];
 
+	graph *g = malloc(sizeof(graph));
+
 	if (fgets(buf, BUFSIZ, fh) == NULL)
-		return 1;
+		return NULL;
 
 	g->nvertices = strtol(buf, NULL, 10);
 	g->edges     = malloc(g->nvertices * sizeof(*(g->edges)));
@@ -42,7 +45,7 @@ read_graph(graph *g, FILE *fh)
 		if (x < 0
 		||  y < 0
 		||  x > g->nvertices
-		||  y > g->nvertices) return 1;
+		||  y > g->nvertices) return NULL;
 
 		_insert_edge(g, x, y, w);
 		_insert_edge(g, y, x, w);
@@ -50,7 +53,7 @@ read_graph(graph *g, FILE *fh)
 		g->nedges++;
 	}
 
-	return nvertices == g->nvertices ? 0 : 1;
+	return g;
 }
 
 graph *
@@ -73,8 +76,8 @@ gen_graph(int nv)
 			srand(seed++);
 			w = ((int)rand() % 10) + 1;
 			g->nedges++;
-			_insert_edge(g, i, j, w);
-			_insert_edge(g, j, i, w);
+			_insert_edge(g, x, y, w);
+			_insert_edge(g, y, x, w);
 		}
 	}
 

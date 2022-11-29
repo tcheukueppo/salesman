@@ -48,17 +48,9 @@ main(int argc, char **argv)
 			usage(PROGNAME);
 	} GRA;
 
-	/* Passing multiple -f/-g/-s paramters overwrites their 
-	 * corresponding previously set values
-	 */
-
 	graph **g = setup_graph(graph, nv);
 
-	int i = 0;
-	for ()
-
-	// TSP sequential & threaded
-
+	/* TSP sequential & threaded */
 
 	return 0;
 }
