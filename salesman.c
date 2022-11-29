@@ -83,5 +83,7 @@ main(int argc, char **argv)
 
 	/* TSP, sequential form */
 
+	free(mc->path);
+	free(mc);
 	return 0;
 }

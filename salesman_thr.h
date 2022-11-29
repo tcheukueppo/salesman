@@ -11,7 +11,7 @@ typedef struct {
 // Queue of tasks
 typedef struct {
 	int size;
-	stack *queue;
+	int **q;
 } queue;
 
 typedef struct {
