@@ -9,7 +9,7 @@
  *                                          by Kueppo :-)
  */
 
-/* BEGINNING STATEMENT with ARG */
+/* BEGINNING STATEMENT with 'ARG {' */
 #define ARG \
 	PROGNAME = *argv++, argc--; \
 	for ( ; argv[0] && argv[0][0] == '-'; argc--, argv++ ) { \
@@ -41,7 +41,7 @@
 		)
 
 
-/* ENDING STATEMENT with GRA (ARG <-----) */
+/* ENDING STATEMENT with '} GRA;' (ARG <-----) */
 #define GRA \
 		} \
 	}

@@ -10,6 +10,7 @@
 
 /* Prototypes */
 void usage(const char *cmd);
+graph **setup_graph(const char *gf, long int nv);
 
 void
 usage(const char *cmd)
@@ -24,23 +25,21 @@ main(int argc, char **argv)
 {
 
 	long int  sv = -1, nv = -1;
-	char *graph_file = NULL;
+	char *graph_file;
 
-	/* Going to be automatically set via "arg.h" */
+	/* Magically parse command line arguments and set things up
+	 * `PROGNAME' is going to be automatically set via "arg.h" 
+	 */
 	char *PROGNAME;
-
 	ARG {
 		case 'f':
 			graph_file = GET(usage(PROGNAME));
-			fprintf(stdout, "file: %s\n", graph_file);
 			break;
 		case 'g':
 			nv = strtol(GET(usage(PROGNAME)), NULL, 10);
-			fprintf(stdout, "nv: %d\n", nv);
 			break;
 		case 's':
 			sv = strtol(GET(usage(PROGNAME)), NULL, 10);
-			fprintf(stdout, "sv: %d\n", sv);
 			break;
 		case 'v':
 			fprintf(stdout, "salesman-%.2f, @uy1 licensed under GPL.\n", VERSION);
@@ -48,6 +47,18 @@ main(int argc, char **argv)
 		default:
 			usage(PROGNAME);
 	} GRA;
+
+	/* Passing multiple -f/-g/-s paramters overwrites their 
+	 * corresponding previously set values
+	 */
+
+	graph **g = setup_graph(graph, nv);
+
+	int i = 0;
+	for ()
+
+	// TSP sequential & threaded
+
 
 	return 0;
 }

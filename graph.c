@@ -38,32 +38,25 @@ read_graph(graph *g, FILE *fh)
 		x = strtol(strtok(buf, " "),  NULL, 10);
 		y = strtol(strtok(NULL, " "), NULL, 10);
 		w = strtol(strtok(NULL, " "), NULL, 10);
+
+		if (x < 0
+		||  y < 0
+		||  x > g->nvertices
+		||  y > g->nvertices) return 1;
+
 		_insert_edge(g, x, y, w);
-		nvertices++;
+		_insert_edge(g, y, x, w);
+
+		g->nedges++;
 	}
-	g->nedges /= 2;
 
 	return nvertices == g->nvertices ? 0 : 1;
 }
 
-static edgenode *
-_find_reflect(graph *g, int i, int v)
-{
-	edgenode *enode = g->edges[i];
-
-	while (enode != NULL) {
-		if (enode->y == v) break;
-		enode = enode->next;	
-	}
-
-	return enode;
-}
-
-
 graph *
 gen_graph(int nv)
 {
-	int i, w, v = 1;
+	int x, y, w = 1;
 	unsigned long seed = time(0);
 
 	edgenode *enode = NULL;
@@ -71,24 +64,18 @@ gen_graph(int nv)
 
 	g->nvertices = nv++;
 	g->edges     = malloc( nv * sizeof(*(g->edges)) );
-	while (v != nv) {
-		// Generating edges for vertex `v'
-		for (i = 1; i <= (nv - 1); i++) {
-			if (i == v) continue;
 
-			enode = _find_reflect(g, i, v);
-			if (enode) {
-				w = enode->w;
-			} else {
-				// Update seed to produce different pseudo-random series
-				// each time `rand' runs.
-				srand(seed++);
-				w = ((int)rand() % 10) + 1;
-				g->nedges++;
-			}
-			_insert_edge(g, v, i, w);
+	for (x = 1; x < nv - 1; x++) {
+		for (y = x + 1; y < nv; y++) {
+			/* Update seed to produce different pseudo-random series
+			 * each time `rand' runs.
+			 */
+			srand(seed++);
+			w = ((int)rand() % 10) + 1;
+			g->nedges++;
+			_insert_edge(g, i, j, w);
+			_insert_edge(g, j, i, w);
 		}
-		v++;
 	}
 
 	return g;
