@@ -1,2 +1,4 @@
 *.o
 salesman_seq
+tags
+save

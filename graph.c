@@ -26,6 +26,7 @@ read_graph(FILE *fh)
 	// vertex_x tail_y weight
 	// ...      ...    ...
 
+	printf("reading the graph...\n");
 	int x, y, w, nvertices = 0;
 	char buf[BUFSIZ];
 
@@ -59,7 +60,6 @@ read_graph(FILE *fh)
 graph *
 gen_graph(int nv)
 {
-	int x, y, w = 1;
 	unsigned long seed = time(0);
 
 	edgenode *enode = NULL;
@@ -68,6 +68,7 @@ gen_graph(int nv)
 	g->nvertices = nv++;
 	g->edges     = malloc( nv * sizeof(*(g->edges)) );
 
+	int x, y, w = 1;
 	for (x = 1; x < nv - 1; x++) {
 		for (y = x + 1; y < nv; y++) {
 			/* Update seed to produce different pseudo-random series
