@@ -26,7 +26,6 @@ read_graph(FILE *fh)
 	// vertex_x tail_y weight
 	// ...      ...    ...
 
-	printf("reading the graph...\n");
 	int x, y, w, nvertices = 0;
 	char buf[BUFSIZ];
 

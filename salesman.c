@@ -32,7 +32,8 @@ main(int argc, char **argv)
 {
 
 	char *PROGNAME;
-	char *graph_file, nthreads = 2, nvtics = -1, svertex = -1;
+	char *graph_file;
+	int  nthreads = 2, nvtics = -1, svertex = -1;
 
 	/* Magically parse command line arguments and set things up
 	 * `PROGNAME' is going to be automatically set via "arg.h" 
@@ -62,21 +63,24 @@ main(int argc, char **argv)
 	if (graph_file) {
 
 		FILE *fh = fopen(graph_file, "r");
-
 		if (fh != NULL) {
-			if ((g = read_graph(fh)) == NULL) die("%s : ERROR: error while reading '%s'\n", PROGNAME, graph_file);
+			if ( (g = read_graph(fh)) == NULL )
+				die("%s : ERROR: error while reading '%s'\n", PROGNAME, graph_file);
 		} else {
 			die("%s: ERROR: could not open '%s'\n", PROGNAME, graph_file);
 		}
 
-		svertex = (svertex == -1 ? 1 : g->nvertices);
+		svertex = (svertex == -1 ? g->nvertices : svertex);
 	} else {
 		nvtics  = (nvtics  == -1 ? 5 : nvtics);
 		svertex = (svertex == -1 ? 1 : svertex);
-		g = gen_graph(nvtics);
+		g       = gen_graph(nvtics);
 	}
 
 	display_graph(g);
+	mcost *mc = tsp_sequential(g, svertex);
+	tsp_result(mc, svertex, g->nvertices);
+
 	/* TSP, sequential form */
 
 	return 0;
