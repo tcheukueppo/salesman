@@ -4,6 +4,7 @@
 
 #include "graph.h"
 #include "salesman_seq.h"
+#include "mcost.h"
 
 static int *visited;
 static int *node_stack;

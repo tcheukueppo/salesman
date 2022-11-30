@@ -3,6 +3,7 @@
 
 #include "arg.h"
 #include "graph.h"
+#include "mcost.h"
 #include "salesman_seq.h"
 #include "salesman_thr.h"
 
@@ -35,9 +36,6 @@ main(int argc, char **argv)
 	char *graph_file;
 	int  nthreads = 2, nvtics = -1, svertex = -1;
 
-	/* Magically parse command line arguments and set things up
-	 * `PROGNAME' is going to be automatically set via "arg.h" 
-	 */
 	ARG {
 		case 'f':
 			graph_file = GET(usage(PROGNAME));
@@ -59,16 +57,15 @@ main(int argc, char **argv)
 	} GRA;
 	if (argc) usage(PROGNAME);
 
-	graph *g = NULL;
+	graph *g;
 	if (graph_file) {
-
 		FILE *fh = fopen(graph_file, "r");
-		if (fh != NULL) {
-			if ( (g = read_graph(fh)) == NULL )
-				die("%s : ERROR: error while reading '%s'\n", PROGNAME, graph_file);
-		} else {
+
+		if (fh == NULL)
 			die("%s: ERROR: could not open '%s'\n", PROGNAME, graph_file);
-		}
+
+		if ((g = read_graph(fh)) == NULL)
+			die("%s : ERROR: error while reading '%s'\n", PROGNAME, graph_file);
 
 		svertex = (svertex == -1 ? g->nvertices : svertex);
 	} else {
@@ -80,6 +77,9 @@ main(int argc, char **argv)
 	display_graph(g);
 	mcost *mc = tsp_sequential(g, svertex);
 	tsp_result(mc, svertex, g->nvertices);
+
+	queue *qu = gen_tasks(g, svertex);
+	display_queue(qu, g->nvertices - 2);
 
 	/* TSP, sequential form */
 
