@@ -59,14 +59,13 @@ main(int argc, char **argv)
 
 	graph *g;
 	if (graph_file) {
-		FILE *fh = fopen(graph_file, "r");
 
+		FILE *fh = fopen(graph_file, "r");
 		if (fh == NULL)
 			die("%s: ERROR: could not open '%s'\n", PROGNAME, graph_file);
 
 		if ((g = read_graph(fh)) == NULL)
 			die("%s : ERROR: error while reading '%s'\n", PROGNAME, graph_file);
-
 		svertex = (svertex == -1 ? g->nvertices : svertex);
 	} else {
 		nvtics  = (nvtics  == -1 ? 5 : nvtics);
@@ -83,6 +82,9 @@ main(int argc, char **argv)
 
 	/* TSP, sequential form */
 
+	long int i;
+	for (i = 0; i <= qu->size; i++) free(qu->q[i]);
+	free(qu);
 	free(mc->path);
 	free(mc);
 	return 0;
