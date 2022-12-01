@@ -34,7 +34,7 @@ main(int argc, char **argv)
 
 	char *PROGNAME;
 	char *graph_file;
-	int  nthreads = 2, nvtics = -1, svertex = -1;
+	int  nthreads = -1, nvtics = -1, svertex = -1;
 
 	ARG {
 		case 'f':
@@ -73,12 +73,15 @@ main(int argc, char **argv)
 		g       = gen_graph(nvtics);
 	}
 
+	nthreads = (nthreads == -1 ? 1 : nthreads);
 	display_graph(g);
 	mcost *mc = tsp_sequential(g, svertex);
 	tsp_result(mc, svertex, g->nvertices);
 
 	queue *qu = gen_tasks(g, svertex);
 	display_queue(qu, g->nvertices - 2);
+	mcost *mc2 = tsp_threaded(g, qu, svertex, nthreads);
+	tsp_result(mc2, svertex, g->nvertices);
 
 	/* TSP, sequential form */
 
@@ -87,5 +90,8 @@ main(int argc, char **argv)
 	free(qu);
 	free(mc->path);
 	free(mc);
+	free(mc2->path);
+	free(mc2);
+
 	return 0;
 }

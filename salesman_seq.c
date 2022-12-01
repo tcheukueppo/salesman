@@ -51,14 +51,13 @@ tsp_sequential(graph *g, int start_v)
 	mcost *mc   = malloc(sizeof(mcost));
 	mc->min_cost = -1;
 
-	fprintf(stdout, "works?\n");
 	size_t size = sizeof(int) * g->nvertices;
 	visited    = malloc(size);
 	node_stack = malloc(size);
 	mc->path   = malloc(size);
 
 	/* Clear garbages */
-	for (i = 0; i < g->nvertices; i++) visited[i] = 0;
+	memset(visited, 0, (g->nvertices - 1) * sizeof(int));
 
 	depth_search(g, start_v, start_v, 0, 0, mc);
 
