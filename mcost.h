@@ -4,6 +4,8 @@
 typedef struct {
 	int min_cost;
 	int *path;
-} mcost;
+} Mcost;
+
+void print_mcost(Mcost *mc, int svertex, int size);
 
 #endif
