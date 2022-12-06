@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <sys/time.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "arg.h"
 #include "common.h"
@@ -14,6 +16,8 @@
 /* Prototypes */
 static void usage(const char *cmd, int exit_code);
 static void die(const char *string, const char *cmd, const char *subject);
+
+extern char *TTSP_ERR, *STSP_ERR;
 
 void
 usage(const char *cmd, int exit_code)
@@ -34,9 +38,9 @@ int
 main(int argc, char **argv)
 {
 
-	char *PROGNAME;
-	char *graph_file;
-	int  nthreads = -1, nvtics = -1, svertex = -1;
+	char *PROGNAME = NULL;
+	char *graph_file = NULL;
+	int  nthreads = -1, nvtics = 5, svertex = -1, debug = 0;
 
 	ARG {
 		case 'f':
@@ -51,6 +55,9 @@ main(int argc, char **argv)
 		case 't':
 			nthreads = strtol(GET(usage(PROGNAME, 1)), NULL , 10);
 			break;
+		case 'd':
+			debug = strtol(GET(usage(PROGNAME, 1)), NULL , 10);
+			break;
 		case 'v':
 			fprintf(stdout, "salesman-%.2f, @uy1 licensed under GPL.\n", VERSION);
 			exit(0);
@@ -61,8 +68,8 @@ main(int argc, char **argv)
 	} GRA;
 	if (argc) usage(PROGNAME, 1);
 
-	Graph *g;
-	if (graph_file) {
+	Graph *g = NULL;
+	if (graph_file != NULL) {
 
 		FILE *fh = fopen(graph_file, "r");
 		if (fh == NULL)
@@ -72,36 +79,76 @@ main(int argc, char **argv)
 			die("%s : ERROR: error while reading '%s'\n", PROGNAME, graph_file);
 		svertex = (svertex == -1 ? g->nvertices : svertex);
 	} else {
-		nvtics  = (nvtics  == -1 ? 5 : nvtics);
-		svertex = (svertex == -1 ? 1 : svertex);
-		g       = gen_graph(nvtics);
+	fprintf(stdout, "check\n");
+		nvtics = (nvtics  == -1 ? 5 : nvtics);
+		g = gen_graph(nvtics);
 	}
 
-	nthreads = (nthreads == -1 ? 1 : nthreads);
-	display_graph(g);
+	//display_graph(g);
 
-	Mcost *mc;
-	if ( (mc = tsp_sequential(g, svertex)) == NULL ) {
-		fprintf(stderr, "error: tsp_sequential()\n");
+	/* Benchmarking */
+	long int start, end;
+	struct timeval *tv = malloc(sizeof(struct timeval));
+
+	if (!gettimeofday(tv, NULL)) {
+		Mcost *mc;
+		start = tv->tv_sec * pow(10, 9) + tv->tv_usec;
+
+		if ( (mc = tsp_sequential(g, svertex)) == NULL ) {
+			fprintf(stderr, "%s: %s\n", PROGNAME, STSP_ERR);
+			exit(1);
+		}
+
+		if (!gettimeofday(tv, NULL)) {
+			end = tv->tv_sec * pow(10, 9) + tv->tv_usec;
+			print_mcost(mc, svertex, g->nvertices);
+			fprintf(stdout, "time: %ld\n", end - start);
+		} else {
+			fprintf(stderr, "error: gettimeofday()\n");
+		}
+
+		if (mc)
+			free(mc->path);
+		free(mc);
+	} else {
+		fprintf(stderr, "error: gettimeofday()\n");
+	}
+
+	Queue *qu;
+	if ( (qu = gen_tasks(g, svertex)) == NULL ) {
+		fprintf(stderr, "%s: %s\n", PROGNAME, TTSP_ERR);
 		exit(1);
 	}
 
-	print_mcost(mc, svertex, g->nvertices);
-
-	Queue *qu = gen_tasks(g, svertex);
 	display_queue(qu, g->nvertices - 2);
 
-	printf("works?\n");
-	Mcost *mc2 = tsp_threaded(g, qu, svertex, nthreads);
-	print_mcost(mc2, svertex, g->nvertices);
+	if (!gettimeofday(tv, NULL)) {
+		start = tv->tv_sec * pow(10, 9) + tv->tv_usec;
+		nthreads = (nthreads == -1 ? 1 : nthreads);
+		Mcost *mc2;
 
-	/* TSP, sequential form */
+		if ((mc2 = tsp_threaded(g, qu, svertex, nthreads, debug)) == NULL) {
+			fprintf(stderr, "%s: %s\n", PROGNAME, TTSP_ERR);
+			exit(1);
+		}
+
+		if (!gettimeofday(tv, NULL)) {
+			end = tv->tv_sec * pow(10, 9) + tv->tv_usec;
+			print_mcost(mc2, svertex, g->nvertices);
+			fprintf(stdout, "time: %ld\n", end - start);
+		} else {
+			fprintf(stderr, "error: gettimeofday()\n");
+		}
+
+		if (mc2)
+			free(mc2->path);
+		free(mc2);
+	} else {
+		fprintf(stderr, "error: gettimeofday()\n");
+	}
 
 	free_queue(qu);
-	free(mc->path);
-	free(mc);
-	free(mc2->path);
-	free(mc2);
-
+	free(tv);
+	
 	return 0;
 }

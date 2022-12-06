@@ -12,7 +12,7 @@ typedef struct {
 } Queue;
 
 Queue *gen_tasks(Graph *g, int start_v);
-Mcost *tsp_threaded(Graph *g, Queue *qu, int start_v, int nthreads);
+Mcost *tsp_threaded(Graph *g, Queue *qu, int start_v, int nthreads, int debug);
 void  display_queue(Queue *qu, int nvertices);
 void  free_queue(Queue *qu);
 

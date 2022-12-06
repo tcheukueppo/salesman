@@ -2,7 +2,7 @@ CC      = gcc
 OBJECTS = graph.o salesman.o salesman_seq.o salesman_thr.o mcost.o
 
 salesman: $(OBJECTS)
-	${CC} -o salesman $(OBJECTS)
+	${CC} -pthread -o salesman $(OBJECTS)
 
 graph.o: graph.c graph.h
 salesman.o salesman_seq.o salesman_thr.o: graph.c graph.h common.h mcost.h

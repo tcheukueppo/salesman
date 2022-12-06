@@ -25,17 +25,16 @@ typedef struct {
 	Mcost_mutex *mm;
 	Graph *g;
 	int start_v;
+	int debug;
 } Thread_arg;
 
-
-char *TTSP_ERR = NULL;
+char *TTSP_ERR;
 
 static Thread_arg targ;
 static pthread_t *threads;
 static int *candidates;
 static int nperms;
 static int **cache;
-
 static long int fact(int n);
 static int enqueue(Queue *qu, int *task, int size);
 static int *dequeue(Queue *qu);
@@ -43,6 +42,9 @@ static int _gen_perms(Graph *g, int start_v, Queue *qu, int *a_perm, int k);
 static int cost_for(Graph *g, int x, int y);
 static Mcost_mutex *init_mcost_mutex(Mcost *mc);
 static Queue_mutex *init_queue_mutex(Queue *qu);
+static void *worker(void *targ);
+static void *set_mcost(Mcost_mutex *mm, int new_cost, int *path);
+static int  read_mcost(Mcost_mutex *mm);
 static void cleanup(int nvertices);
 
 long int
@@ -117,7 +119,7 @@ gen_tasks(Graph *g, int start_v)
 	&&    (qu->q      = malloc(sizeof(int *) * nperms)) )) 
 	{
 		/* should all be candidates!! */
-		memset(candidates, TRUE, (sizeof(int) * g->nvertices));
+		// memset(candidates, 1, (sizeof(int) * g->nvertices));
 		for (int i = 0; i <= g->nvertices; i++) candidates[i] = TRUE;
 		candidates[start_v] = FALSE;
 
@@ -165,7 +167,7 @@ display_queue(Queue *qu, int nvertices) {
 int
 cost_for(Graph *g, int x, int y)
 {
-	// Did a thread cache it?
+	/* Did a thread cache it? */
 	if (cache[x][y] != -1)
 		return cache[x][y];
 
@@ -242,22 +244,21 @@ read_mcost(Mcost_mutex *mm)
 }
 
 void *
-worker(void *targ, int debug)
+worker(void *targ)
 {
-	int bads = 0, goods = 0, test = 0;
-	int *task, cur_cost;
+	int *task, left = 0, valid = 0;
 	Thread_arg *arg = (Thread_arg *)targ;
 
 	while ( (task = read_queue(arg->qm)) != NULL) {
-		int i = 0, cur_min_cost;
+		int i = 0, cur_cost, cur_min_cost;
 
 		cur_cost = cost_for(arg->g, arg->start_v, task[i]);
 		for (i = 0; i < arg->g->nvertices - 2; i++) {
+
 			cur_cost += cost_for(arg->g, task[i], task[i + 1]);
 			cur_min_cost = read_mcost(arg->mm);
-
 			if (cur_cost > cur_min_cost && cur_min_cost != -1) {
-				bads++;
+				left++;
 				break;
 			}
 		}
@@ -268,14 +269,14 @@ worker(void *targ, int debug)
 		cur_cost += cost_for(arg->g, task[i], arg->start_v);
 		cur_min_cost = read_mcost(arg->mm);
 
-		if (cur_cost < cur_min_cost || cur_min_cost == -1) {
+		if (cur_cost <= cur_min_cost || cur_min_cost == -1) {
 			valid++;
 			set_mcost(arg->mm, cur_cost, task);
 
-			if (debug) {
+			if (arg->debug) {
 				int k;
 
-				fprintf(stdout, "thread: %d (cost: %d): ", pthread_self(), cur_cost);
+				fprintf(stdout, "thread: %lu (cost: %d): ", pthread_self(), cur_cost);
 				for (k = 0; k < arg->g->nvertices - 2; k++)
 					fprintf(stdout, "%d -> ", task[k]);
 				fprintf(stdout, "\n");
@@ -285,17 +286,17 @@ worker(void *targ, int debug)
 		}
 	}
 
-	if (debug)
-		fprintf(stdout, "\nthread: %d, validated: %d, left: %d\n", pthread_self(), valid, left);
+	if (arg->debug)
+		fprintf(stdout, "\nthread: %lu, validated: %d, left: %d\n", pthread_self(), valid, left);
 
 	return (void *)0;
 }
 
 Mcost *
-tsp_threaded(Graph *g, Queue *qu, int start_v, int nthreads)
+tsp_threaded(Graph *g, Queue *qu, int start_v, int nthreads, int debug)
 {
 	if (nthreads > nperms || nthreads > MAX_NTHREADS) {
-		sprintf(TTSP_ERR, "tsp_threaded: ERROR: nthreads %d < 100 && %d > %d?", nthreads, nperms);
+		sprintf(TTSP_ERR, "tsp_threaded: ERROR: nthreads %d < 100 && %d > %d?", nthreads, nthreads, nperms);
 		return NULL;
 	}
 
@@ -304,9 +305,10 @@ tsp_threaded(Graph *g, Queue *qu, int start_v, int nthreads)
 	&&    (mc      = malloc(sizeof(Mcost)))
 	&&    (cache   = malloc(sizeof(int *) * (g->nvertices + 1))) ))
 	{
-		targ.mm = init_mcost_mutex(mc);
-		targ.qm = init_queue_mutex(qu);
-		targ.g = g;
+		targ.mm      = init_mcost_mutex(mc);
+		targ.qm      = init_queue_mutex(qu);
+		targ.g       = g;
+		targ.debug   = debug;
 		targ.start_v = start_v;
 
 		int i;
