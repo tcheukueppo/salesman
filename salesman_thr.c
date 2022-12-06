@@ -6,74 +6,90 @@
 #include "graph.h"
 #include "salesman_thr.h"
 #include "mcost.h"
+#include "common.h"
 
-enum { FALSE, TRUE };
-
-typedef struct {
-	pthread_mutex_t lock;
-	queue* qu;
-} queue_mutex;
+enum { FALSE = 0, TRUE };
 
 typedef struct {
 	pthread_mutex_t lock;
-	mcost *mc;
-} mcost_mutex;
+	Queue* qu;
+} Queue_mutex;
 
 typedef struct {
-	queue_mutex *qm;
-	mcost_mutex *mm;
-	graph       *g;
-	int         start_v;
-} thread_arg;
+	pthread_mutex_t lock;
+	Mcost *mc;
+} Mcost_mutex;
 
+typedef struct {
+	Queue_mutex *qm;
+	Mcost_mutex *mm;
+	Graph *g;
+	int start_v;
+} Thread_arg;
+
+
+char *TTSP_ERR = NULL;
+
+static Thread_arg targ;
+static pthread_t *threads;
 static int *candidates;
 static int nperms;
 static int **cache;
 
 static long int fact(int n);
-static void enqueue(queue *qu, int *task);
-static int  *dequeue(queue *qu);
-static void _gen_perms(graph *g, int start_v, queue *qu, int *a_perm, int k);
-static int  cost_for(graph *g, int x, int y);
-static mcost_mutex* init_mcost_mutex(mcost *mc);
-static queue_mutex* init_queue_mutex(queue *qu);
+static int enqueue(Queue *qu, int *task, int size);
+static int *dequeue(Queue *qu);
+static int _gen_perms(Graph *g, int start_v, Queue *qu, int *a_perm, int k);
+static int cost_for(Graph *g, int x, int y);
+static Mcost_mutex *init_mcost_mutex(Mcost *mc);
+static Queue_mutex *init_queue_mutex(Queue *qu);
+static void cleanup(int nvertices);
 
 long int
 fact(int n)
 {
-	if (n == 0) return 1;
+	if (!n) return 1;
 	return n * fact(n - 1);
 }
 
 /* Add a new task into the queue */
-void
-enqueue(queue *qu, int *task)
+int
+enqueue(Queue *qu, int *task, int size)
 {
-	qu->q[++qu->size] = task;
+	if ( (qu->q[++qu->size] = malloc(sizeof(int) * size)) == NULL )
+		return 1;
+
+	memcpy(qu->q[qu->size], task, sizeof(int) * size);
+	return 0;
 }
 
 /* Remove a task from the queue */
 int *
-dequeue(queue *qu)
+dequeue(Queue *qu)
 {
 	return qu->size != -1 ? qu->q[qu->size--] : NULL;
 }
 
-void
-_gen_perms(graph *g, int start_v, queue *qu, int *a_perm, int k)
+int
+_gen_perms(Graph *g, int start_v, Queue *qu, int *a_perm, int k)
 {
-	// Check if we have exhausted the list of candidates
+	/* Check if we have exhausted the list of candidates */
 	if (k == (g->nvertices - 1)) {
-		int *branch = malloc((sizeof(int) * k));
-
-		memcpy(branch, a_perm, sizeof(int) * k);
-		enqueue(qu, branch);
-		return;
+		if (enqueue(qu, a_perm, k) == 1) {
+			malloc_err(TTSP_ERR, "_gen_perms()");
+			return 1;
+		}
+		return 0;
 	}
 
 	int i;
 	for (i = 1; i <= g->nvertices; i++) {
-		if (i == start_v) continue;
+		/* Go back to the top and report the malloc error */
+		if (TTSP_ERR)
+			return 1;
+
+		if (i == start_v)
+			continue;
 		if (candidates[i] == TRUE) {
 			candidates[i] = FALSE;
 			a_perm[k]     = i;
@@ -81,66 +97,94 @@ _gen_perms(graph *g, int start_v, queue *qu, int *a_perm, int k)
 			candidates[i] = TRUE;
 		}
 	}
+
+	return TTSP_ERR != NULL ? 1 : 0;
 }
 
-queue *
-gen_tasks(graph *g, int start_v)
+Queue *
+gen_tasks(Graph *g, int start_v)
 {
-	int i;
-	queue *qu   = malloc(sizeof(queue));
-	candidates  = malloc(sizeof(int) * (g->nvertices + 1));
-	int *a_perm = malloc(sizeof(int) * g->nvertices);
+	int i, *a_perm = NULL;
+	size_t size    = sizeof(int) * g->nvertices;
+	Queue *qu      = NULL;
 
-	/* All be candidates!! */
-	for (i = 1; i <= g->nvertices; i++) candidates[i] = TRUE;
+	nperms = fact(g->nvertices - 1);
 
-	/* `start_v' should never be a candidate */
-	candidates[start_v] = FALSE;
+	/* tired of mallocing, I'm certain this is insane */
+	if (( (qu         = malloc(sizeof(Queue)))
+	&&    (candidates = malloc((g->nvertices + 1) * sizeof(int)))
+	&&    (a_perm     = malloc(g->nvertices * sizeof(int)))
+	&&    (qu->q      = malloc(sizeof(int *) * nperms)) )) 
+	{
+		/* should all be candidates!! */
+		memset(candidates, TRUE, (sizeof(int) * g->nvertices));
+		for (int i = 0; i <= g->nvertices; i++) candidates[i] = TRUE;
+		candidates[start_v] = FALSE;
 
-	qu->size = -1;
-	nperms   = fact(g->nvertices - 1);
-	qu->q    = malloc(sizeof(int *) *  nperms);
-	_gen_perms(g, start_v, qu, a_perm, 0);
+		qu->size = -1;
+		TTSP_ERR = NULL;
+		if (_gen_perms(g, start_v, qu, a_perm, 0) != 0)
+			free_queue(qu);
+	} else {
+		malloc_err(TTSP_ERR, "gen_tasks()");
+	}
 
 	free(a_perm);
 	free(candidates);
 	return qu;
 }
 
+/* Queue data structure is too complex to be freed without a wrapper */
 void
-display_queue(queue *qu, int nvertices) {
+free_queue(Queue *qu)
+{
+	if (!qu)
+		return;
+
+	if (qu->q) {
+		int i;
+		for (i = 0; i <= qu->size; i++)
+			free(qu->q[i]);
+	}
+
+	free(qu->q);
+	free(qu);
+}
+
+void
+display_queue(Queue *qu, int nvertices) {
 	int j;
 	long int i;
 
 	for (i = 0; i <= qu->size; i++) {
-		for (j = 0; j < nvertices; j++)
-			fprintf(stdout, "%d --> ", qu->q[i][j]);
-		fprintf(stdout, "%d\n|", qu->q[i][nvertices]);
+		for (j = 0; j < nvertices; j++) fprintf(stdout, "%d-", qu->q[i][j]);
+		fprintf(stdout, "%d\n", qu->q[i][nvertices]);
 	}
 }
 
 int
-cost_for(graph *g, int x, int y)
+cost_for(Graph *g, int x, int y)
 {
 	// Did a thread cache it?
 	if (cache[x][y] != -1)
 		return cache[x][y];
 
-	edgenode *enode = g->edges[x];
-	while (enode->y != y && enode != NULL) enode = enode->next;
+	Edgenode *enode = g->edges[x];
+	while (enode->y != y && enode != NULL)
+		enode = enode->next;
 
-	if (enode != NULL) {
+	if (enode != NULL)
 		cache[x][y] = (cache[y][x] = enode->w);
-	}
 
 	return cache[x][y];
 }
 
-mcost_mutex*
-init_mcost_mutex(mcost *mc)
+Mcost_mutex *
+init_mcost_mutex(Mcost *mc)
 {
-	mcost_mutex *mm = NULL;
-	if ((mm = malloc(sizeof(mcost_mutex))) != NULL) {
+	Mcost_mutex *mm = NULL;
+
+	if ((mm = malloc(sizeof(Mcost_mutex))) != NULL ) {
 		mc->min_cost = -1;
 		mm->mc = mc;
 		if (pthread_mutex_init(&mm->lock, NULL) != 0) {
@@ -148,37 +192,40 @@ init_mcost_mutex(mcost *mc)
 			return NULL;
 		}
 	}
+
 	return mm;
 }
 
-queue_mutex*
-init_queue_mutex(queue *qu)
+Queue_mutex *
+init_queue_mutex(Queue *qu)
 {
-	queue_mutex *qm = NULL;
-	if ((qm = malloc(sizeof(queue_mutex))) != NULL) {
+	Queue_mutex *qm = NULL;
+
+	if ((qm = malloc(sizeof(Queue_mutex))) != NULL) {
 		qm->qu = qu;
 		if (pthread_mutex_init(&qm->lock, NULL) != 0) {
 			free(qm);
 			return NULL;
 		}
 	}
+
 	return qm;
 }
 
 int *
-read_queue(queue_mutex *qm)
+read_queue(Queue_mutex *qm)
 {
 	int *task;
+
 	pthread_mutex_lock(&qm->lock);
 	task = dequeue(qm->qu);
 	pthread_mutex_unlock(&qm->lock);
 
 	return task;
-
 }
 
 void *
-set_mcost(mcost_mutex *mm, int new_cost, int *path)
+set_mcost(Mcost_mutex *mm, int new_cost, int *path)
 {
 	pthread_mutex_lock(&mm->lock);
 	if (mm->mc->min_cost > new_cost || mm->mc->min_cost == -1) {
@@ -189,90 +236,121 @@ set_mcost(mcost_mutex *mm, int new_cost, int *path)
 }
 
 int
-read_mcost(mcost_mutex *mm)
+read_mcost(Mcost_mutex *mm)
 {
 	return mm->mc->min_cost;
 }
 
 void *
-worker(void *targ)
+worker(void *targ, int debug)
 {
-	int bads = 0, goods = 0;
+	int bads = 0, goods = 0, test = 0;
 	int *task, cur_cost;
-	thread_arg *arg = (thread_arg *)targ;
+	Thread_arg *arg = (Thread_arg *)targ;
 
 	while ( (task = read_queue(arg->qm)) != NULL) {
-		int i = 0, rm;
+		int i = 0, cur_min_cost;
 
 		cur_cost = cost_for(arg->g, arg->start_v, task[i]);
 		for (i = 0; i < arg->g->nvertices - 2; i++) {
 			cur_cost += cost_for(arg->g, task[i], task[i + 1]);
-			rm = read_mcost(arg->mm);
-			if (cur_cost > rm && rm != -1) {
-				bads++;				
+			cur_min_cost = read_mcost(arg->mm);
+
+			if (cur_cost > cur_min_cost && cur_min_cost != -1) {
+				bads++;
 				break;
 			}
 		}
-		cur_cost += cost_for(arg->g, task[i], arg->start_v);
-		rm = read_mcost(arg->mm);
-		if (cur_cost < rm || rm == -1) {
-			set_mcost(arg->mm, cur_cost, task);
-			fprintf(stdout, "thread: %d(cost: %d): ", pthread_self(), cur_cost);
-			for (int k = 0; k < arg->g->nvertices - 2; k++)
-				fprintf(stdout, "%d -> ", task[k]);
-			fprintf(stdout, "\n");
 
-			goods++;
+		if (cur_cost > cur_min_cost && cur_min_cost != -1)
+			continue;
+
+		cur_cost += cost_for(arg->g, task[i], arg->start_v);
+		cur_min_cost = read_mcost(arg->mm);
+
+		if (cur_cost < cur_min_cost || cur_min_cost == -1) {
+			valid++;
+			set_mcost(arg->mm, cur_cost, task);
+
+			if (debug) {
+				int k;
+
+				fprintf(stdout, "thread: %d (cost: %d): ", pthread_self(), cur_cost);
+				for (k = 0; k < arg->g->nvertices - 2; k++)
+					fprintf(stdout, "%d -> ", task[k]);
+				fprintf(stdout, "\n");
+			}
+		} else {
+			left++;
 		}
 	}
 
-	fprintf(stdout, "\nThread: %d, goods: %d, bads: %d\n", pthread_self(), goods, bads);
+	if (debug)
+		fprintf(stdout, "\nthread: %d, validated: %d, left: %d\n", pthread_self(), valid, left);
 
 	return (void *)0;
 }
 
-mcost*
-tsp_threaded(graph *g, queue *qu, int start_v, int nthreads)
+Mcost *
+tsp_threaded(Graph *g, Queue *qu, int start_v, int nthreads)
 {
-	if (nthreads > nperms || nthreads > 100) {
-		fprintf(stderr, "tsp_threaded: ERROR: nthreads: '%d' isn't proper\n", nthreads);
-		exit(1);
+	if (nthreads > nperms || nthreads > MAX_NTHREADS) {
+		sprintf(TTSP_ERR, "tsp_threaded: ERROR: nthreads %d < 100 && %d > %d?", nthreads, nperms);
+		return NULL;
 	}
 
-	pthread_t *threads = malloc(sizeof(pthread_t) * nthreads);
-	mcost *mc = malloc(sizeof(mcost));
-	thread_arg targ;
-	targ.mm = init_mcost_mutex(mc);
-	targ.qm = init_queue_mutex(qu);
-	targ.g = g;
-	targ.start_v = start_v;
+	Mcost *mc;
+	if (( (threads = malloc(sizeof(pthread_t) * nthreads))
+	&&    (mc      = malloc(sizeof(Mcost)))
+	&&    (cache   = malloc(sizeof(int *) * (g->nvertices + 1))) ))
+	{
+		targ.mm = init_mcost_mutex(mc);
+		targ.qm = init_queue_mutex(qu);
+		targ.g = g;
+		targ.start_v = start_v;
 
-	/* Initialize cache to speed up the `cost' lookup */
-
-	cache = malloc(sizeof(int *) * (g->nvertices + 1));
-
-	int i;
-	size_t st = sizeof(int) * (g->nvertices + 1);
-	for (i = 1; i <= g->nvertices; i++) {
-		cache[i] = malloc(st);
-		memset(cache[i], -1, st);
-	}
-
-	for (i = 0; i < nthreads; i++) {
-		if (pthread_create(&threads[i], NULL, worker, (void *)&targ) != 0) {
-			fputs("tsp_threaded: ERROR: pthread_create: could initiate a thread, exit program with failure", stderr);
-			free(threads);
-			exit(1);
+		int i;
+		size_t st = sizeof(int) * (g->nvertices + 1);
+		for (i = 1; i <= g->nvertices; i++) {
+			if ((cache[i] = malloc(st)) == NULL) {
+				cleanup(g->nvertices);
+				malloc_err(TTSP_ERR, "cache");
+				return NULL;
+			}
+			memset(cache[i], -1, st);
 		}
+
+		for (i = 0; i < nthreads; i++) {
+			if (pthread_create(&threads[i], NULL, worker, (void *)&targ) != 0) {
+				cleanup(g->nvertices);
+				TTSP_ERR = "tsp_threaded: ERROR: pthread_create";
+				return NULL;
+			}
+		}
+
+		/* Wait for worker threads to finish their jobs */
+		void *ret;
+		for (i = 0; i < nthreads; i++)
+			pthread_join(threads[i], &ret);
+
+	} else {
+		malloc_err(TTSP_ERR, "tsp_threaded()");
 	}
 
-	/* Wait for worker threads to finish their jobs */
-	void *ret;
-	for (i = 0; i < nthreads; i++)
-		pthread_join(threads[i], &ret);
-
-	for (i = 1; i <= g->nvertices; i++) free(cache[i]);
-	free(cache);
-	free(threads);
+	cleanup(g->nvertices);
 	return mc;
+}
+
+void
+cleanup(int nvertices)
+{
+	if (cache) {
+		int i;
+		for (i = 1; i <= nvertices; i++)
+			free(cache[i]);
+	}
+	free(cache);
+	free(targ.mm);
+	free(targ.qm);
+	free(threads);
 }

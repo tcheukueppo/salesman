@@ -1,16 +1,19 @@
 #ifndef _SALESMAN_THR_
 #define _SALESMAN_THR_
 
+#define MAX_NTHREADS 100
+
 #include "mcost.h"
 
-// Queue of tasks
+/* Queue of tasks */
 typedef struct {
 	long int size;
 	int **q;
-} queue;
+} Queue;
 
-queue *gen_tasks(graph *g, int start_v);
-mcost *tsp_threaded(graph *g, queue *qu, int start_v, int nthreads);
-void   display_queue(queue *qu, int nvertices);
+Queue *gen_tasks(Graph *g, int start_v);
+Mcost *tsp_threaded(Graph *g, Queue *qu, int start_v, int nthreads);
+void  display_queue(Queue *qu, int nvertices);
+void  free_queue(Queue *qu);
 
 #endif

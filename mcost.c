@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include "mcost.h"
+
 void
 print_mcost(Mcost *mc, int svertex, int size)
 {

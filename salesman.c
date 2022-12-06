@@ -2,23 +2,25 @@
 #include <stdlib.h>
 
 #include "arg.h"
-#include "graph.h"
+#include "common.h"
 #include "mcost.h"
+
+#include "graph.h"
 #include "salesman_seq.h"
 #include "salesman_thr.h"
 
 #define VERSION 0.01
 
 /* Prototypes */
-static void usage(const char *cmd);
+static void usage(const char *cmd, int exit_code);
 static void die(const char *string, const char *cmd, const char *subject);
 
 void
-usage(const char *cmd)
+usage(const char *cmd, int exit_code)
 {
 	fprintf(stderr, "usage: %s [ -f GRAPH_FILE | -g NUM_VERTICES ] "
 	                "[ -s START_VERTEX ] [ -t NTHREADS ] [ -v ]\n", cmd);
-	exit(1);
+	exit(exit_code);
 }
 
 void
@@ -38,26 +40,28 @@ main(int argc, char **argv)
 
 	ARG {
 		case 'f':
-			graph_file = GET(usage(PROGNAME));
+			graph_file = GET(usage(PROGNAME, 1));
 			break;
 		case 'g':
-			nvtics = strtol(GET(usage(PROGNAME)), NULL, 10);
+			nvtics = strtol(GET(usage(PROGNAME, 1)), NULL, 10);
 			break;
 		case 's':
-			svertex = strtol(GET(usage(PROGNAME)), NULL, 10);
+			svertex = strtol(GET(usage(PROGNAME, 1)), NULL, 10);
 			break;
 		case 't':
-			nthreads = strtol(GET(usage(PROGNAME)), NULL , 10);
+			nthreads = strtol(GET(usage(PROGNAME, 1)), NULL , 10);
 			break;
 		case 'v':
 			fprintf(stdout, "salesman-%.2f, @uy1 licensed under GPL.\n", VERSION);
 			exit(0);
+		case 'h':
+			usage(PROGNAME, 0);
 		default:
-			usage(PROGNAME);
+			usage(PROGNAME, 1);
 	} GRA;
-	if (argc) usage(PROGNAME);
+	if (argc) usage(PROGNAME, 1);
 
-	graph *g;
+	Graph *g;
 	if (graph_file) {
 
 		FILE *fh = fopen(graph_file, "r");
@@ -75,19 +79,25 @@ main(int argc, char **argv)
 
 	nthreads = (nthreads == -1 ? 1 : nthreads);
 	display_graph(g);
-	mcost *mc = tsp_sequential(g, svertex);
-	tsp_result(mc, svertex, g->nvertices);
 
-	queue *qu = gen_tasks(g, svertex);
+	Mcost *mc;
+	if ( (mc = tsp_sequential(g, svertex)) == NULL ) {
+		fprintf(stderr, "error: tsp_sequential()\n");
+		exit(1);
+	}
+
+	print_mcost(mc, svertex, g->nvertices);
+
+	Queue *qu = gen_tasks(g, svertex);
 	display_queue(qu, g->nvertices - 2);
-	mcost *mc2 = tsp_threaded(g, qu, svertex, nthreads);
-	tsp_result(mc2, svertex, g->nvertices);
+
+	printf("works?\n");
+	Mcost *mc2 = tsp_threaded(g, qu, svertex, nthreads);
+	print_mcost(mc2, svertex, g->nvertices);
 
 	/* TSP, sequential form */
 
-	long int i;
-	for (i = 0; i <= qu->size; i++) free(qu->q[i]);
-	free(qu);
+	free_queue(qu);
 	free(mc->path);
 	free(mc);
 	free(mc2->path);

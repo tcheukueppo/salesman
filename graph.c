@@ -6,9 +6,9 @@
 #include "graph.h"
 
 static void
-_insert_edge(graph *g, int x, int y, int w)
+_insert_edge(Graph *g, int x, int y, int w)
 {
-	edgenode *enode = malloc(sizeof(edgenode));
+	Edgenode *enode = malloc(sizeof(Edgenode));
 
 	enode->y    = y;
 	enode->w    = w;
@@ -16,11 +16,11 @@ _insert_edge(graph *g, int x, int y, int w)
 	g->edges[x] = enode;
 }
 
-graph *
+Graph *
 read_graph(FILE *fh)
 {
 	// PROTOCOL SPECIFICATION for STDIN
-	// file_graph.gh
+	// file_Graph.gh
 	// ---------------------
 	// nb_vertices
 	// vertex_x tail_y weight
@@ -29,7 +29,7 @@ read_graph(FILE *fh)
 	int x, y, w, nvertices = 0;
 	char buf[BUFSIZ];
 
-	graph *g = malloc(sizeof(graph));
+	Graph *g = malloc(sizeof(Graph));
 
 	if (fgets(buf, BUFSIZ, fh) == NULL)
 		return NULL;
@@ -56,13 +56,13 @@ read_graph(FILE *fh)
 	return g;
 }
 
-graph *
+Graph *
 gen_graph(int nv)
 {
 	unsigned long seed = time(0);
 
-	edgenode *enode = NULL;
-	graph    *g     = malloc(sizeof(graph));
+	Edgenode *enode = NULL;
+	Graph    *g     = malloc(sizeof(Graph));
 
 	g->nvertices = nv++;
 	g->edges     = malloc( nv * sizeof(*(g->edges)) );
@@ -85,10 +85,10 @@ gen_graph(int nv)
 }
 
 void
-display_graph(graph *g)
+display_graph(Graph *g)
 {
 	int i;
-	edgenode *enode;
+	Edgenode *enode;
 
 	fprintf(stdout, "nvertices: %d, nedges: %d\n", g->nvertices, g->nedges);
 	for (i = 1; i <= g->nvertices; i++) {
