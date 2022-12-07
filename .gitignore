@@ -1,5 +1,6 @@
 *.o
-salesman_seq
+*.pdf
+salesman
 tags
 save
 plots
