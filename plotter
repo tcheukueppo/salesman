@@ -54,7 +54,7 @@ check() {
 
 	if [ $NTHREAD_LIMIT -lt 2 ]
 	then
-		printf "%s err: emax NTHREAD is 2" "$ARG0" >&2
+		printf "%s err: max NTHREAD is 2" "$ARG0" >&2
 		usage 1
 	fi
 
@@ -89,16 +89,16 @@ gen_statics() {
 	done
 }
 
-# Plot nthreads vs time
+# Plot time vs nthreads
 plot() {
+
 	cat <<EOF | gnuplot --persist >$GRAPH
 set term png
 set style line 1 linecolor rgb '#0060ad' linetype 1 linewidth 2 pointtype 7 pointsize 1.5
-
 plot '$DATA' with linespoints linestyle 1
 EOF
-}
 
+}
 
 main "$@" \
 	&& printf "checking ..." \
