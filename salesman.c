@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <sys/time.h>
+#include <time.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -23,7 +23,8 @@ void
 usage(const char *cmd, int exit_code)
 {
 	fprintf(stderr, "usage: %s [ -f GRAPH_FILE | -g NUM_VERTICES ] "
-	                "[ -s START_VERTEX ] [ -t NTHREADS ] [ -v ]\n", cmd);
+	                "[ -s START_VERTEX ] [ -t NTHREADS ] [ -v|-i|-h ] "
+	                "[ -d DEBUG_FLAG ]\n", cmd);
 	exit(exit_code);
 }
 
@@ -66,89 +67,82 @@ main(int argc, char **argv)
 		default:
 			usage(PROGNAME, 1);
 	} GRA;
-	if (argc) usage(PROGNAME, 1);
+
+	if (argc)
+		usage(PROGNAME, 1);
 
 	Graph *g = NULL;
 	if (graph_file != NULL) {
-
 		FILE *fh = fopen(graph_file, "r");
+
 		if (fh == NULL)
 			die("%s: ERROR: could not open '%s'\n", PROGNAME, graph_file);
 
 		if ((g = read_graph(fh)) == NULL)
-			die("%s : ERROR: error while reading '%s'\n", PROGNAME, graph_file);
+			die("%s: ERROR: error while reading '%s'\n", PROGNAME, graph_file);
+
 		svertex = (svertex == -1 ? g->nvertices : svertex);
 	} else {
-	fprintf(stdout, "check\n");
-		nvtics = (nvtics  == -1 ? 5 : nvtics);
+		nvtics = (nvtics == -1 ? 5 : nvtics);
+		svertex = (svertex == -1 ? 1 : svertex);
 		g = gen_graph(nvtics);
 	}
 
-	//display_graph(g);
+	display_graph(g);
 
 	/* Benchmarking */
-	long int start, end;
-	struct timeval *tv = malloc(sizeof(struct timeval));
+	char start[BUFSIZ], end[BUFSIZ];
+	float cpu_time_used;
+	struct timespec cputime;
 
-	if (!gettimeofday(tv, NULL)) {
-		Mcost *mc;
-		start = tv->tv_sec * pow(10, 9) + tv->tv_usec;
+	Mcost *mc;
 
-		if ( (mc = tsp_sequential(g, svertex)) == NULL ) {
-			fprintf(stderr, "%s: %s\n", PROGNAME, STSP_ERR);
-			exit(1);
-		}
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cputime);
+	sprintf(start, "%lld.%09ld", (long long)cputime.tv_sec, cputime.tv_nsec);
+	//fprintf(stdout, "start: %s\n", start);
+	if ((mc = tsp_sequential(g, svertex)) == NULL)
+		die("%s: %s\n", PROGNAME, STSP_ERR);
 
-		if (!gettimeofday(tv, NULL)) {
-			end = tv->tv_sec * pow(10, 9) + tv->tv_usec;
-			print_mcost(mc, svertex, g->nvertices);
-			fprintf(stdout, "time: %ld\n", end - start);
-		} else {
-			fprintf(stderr, "error: gettimeofday()\n");
-		}
+	fprintf(stdout, "done?\n");
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cputime);
+	sprintf(end, "%lld.%09ld", (long long)cputime.tv_sec, cputime.tv_nsec);
+	cpu_time_used = strtof(end, NULL) - strtof(start, NULL);
+	fprintf(stdout, "seq, time:%.9f\n", cpu_time_used);
+	//fprintf(stdout, "end: %s\n", end);
+	print_mcost(mc, svertex, g->nvertices);
 
-		if (mc)
-			free(mc->path);
-		free(mc);
-	} else {
-		fprintf(stderr, "error: gettimeofday()\n");
-	}
+	if (mc)
+		free(mc->path);
+	free(mc);
 
 	Queue *qu;
-	if ( (qu = gen_tasks(g, svertex)) == NULL ) {
-		fprintf(stderr, "%s: %s\n", PROGNAME, TTSP_ERR);
-		exit(1);
-	}
+	if ((qu = gen_tasks(g, svertex)) == NULL)
+		die("%s: %s\n", PROGNAME, TTSP_ERR);
 
-	display_queue(qu, g->nvertices - 2);
+	//display_queue(qu, g->nvertices - 2);
 
-	if (!gettimeofday(tv, NULL)) {
-		start = tv->tv_sec * pow(10, 9) + tv->tv_usec;
-		nthreads = (nthreads == -1 ? 1 : nthreads);
-		Mcost *mc2;
+	nthreads = (nthreads == -1 ? 2 : nthreads);
 
-		if ((mc2 = tsp_threaded(g, qu, svertex, nthreads, debug)) == NULL) {
-			fprintf(stderr, "%s: %s\n", PROGNAME, TTSP_ERR);
-			exit(1);
-		}
+	Mcost *mc2;
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cputime);
+	sprintf(start, "%lld.%09ld", (long long)cputime.tv_sec, cputime.tv_nsec);
+	//fprintf(stdout, "\nstart: %s\n", start);
 
-		if (!gettimeofday(tv, NULL)) {
-			end = tv->tv_sec * pow(10, 9) + tv->tv_usec;
-			print_mcost(mc2, svertex, g->nvertices);
-			fprintf(stdout, "time: %ld\n", end - start);
-		} else {
-			fprintf(stderr, "error: gettimeofday()\n");
-		}
+	if ((mc2 = tsp_threaded(g, qu, svertex, nthreads, debug)) == NULL)
+		die("%s: %s\n", PROGNAME, TTSP_ERR);
 
-		if (mc2)
-			free(mc2->path);
-		free(mc2);
-	} else {
-		fprintf(stderr, "error: gettimeofday()\n");
-	}
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cputime);
+	sprintf(end, "%lld.%09ld", (long long)cputime.tv_sec, cputime.tv_nsec);
+
+	cpu_time_used = strtof(end, NULL) - strtof(start, NULL);
+	fprintf(stdout, "threaded, time:%.9f\n", cpu_time_used);
+	//fprintf(stdout, "end: %s\n", end);
+	print_mcost(mc2, svertex, g->nvertices);
+
+	if (mc2)
+		free(mc2->path);
+	free(mc2);
 
 	free_queue(qu);
-	free(tv);
-	
 	return 0;
 }

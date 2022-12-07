@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+
+NUM_NODES=11
+NTHREAD_LIMIT=20
+BASE=plots
+GRAPH_FILE="$BASE/gf"
+DATA="$BASE/data"
+GRAPH="$BASE/graph.png"
+ARG0=$(printf "$0\n" | sed -e 's#.*/##')
+
+main() {
+	while getopts hn:g:t:p:d: opt
+	do
+		case $opt in
+			g) GRAPH_FILE=$OPTARG ;;
+			n) NUM_NODES=$OPTARG ;;
+			d) DATA_FILE=$OPTARG ;;
+			t) NTHREAD_LIMIT=$OPTARG ;;
+			p) GRAPH=$OPTARG ;;
+			h) usage ;;
+			\?) usage 1 ;;
+		esac
+	done
+	mkdir -p $BASE
+}
+
+usage() {
+	cat <<EOF
+usage:
+   $ARG0 [ -h ] [ -n NUM_NODES ] [ -g GRAPH_FILE ] [ -n NTHREAD_LIMIT ] [ -p GRAPH ]
+
+   -h:               display this help message.
+   -n NUM_NODES:     the maximum numbers of nodes to generate the graph.
+   -d DATA_FILE:     the maximum numbers of nodes to generate the graph.
+   -g GRAPH_FILE:    path to store the generated graph.
+   -t NTHREAD_LIMIT: benchmark for from 2 to NTHREAD_LIMIT threads.
+   -p GRAPH:         specify the path to the generate graph(not to be 
+                     confused with the graph DATA STRUCTURE).
+EOF
+	exit ${1:-0}
+}
+
+## Check command line arguments
+check() {
+	if ! command -v gnuplot >/dev/null
+	then
+		printf "%s: err: install gnuplot first" "$ARG0" >&2
+		exit 1
+	fi
+
+	[ -z "$(expr "$NUM_NODES" : '\([1-9][0-9]\+\|[2-9]\)')" ] && usage 1
+	[ -z "$(expr "$NTHREAD_LIMIT" : '\([1-9]*\)')" ] && usage 1
+	[ -e "$FILE" ] && rm -f "$i"
+
+	if [ $NTHREAD_LIMIT -lt 2 ]
+	then
+		printf "%s err: emax NTHREAD is 2" "$ARG0" >&2
+		usage 1
+	fi
+
+	return 0
+}
+
+## Randomly generate a graph
+gen_graph() {
+	printf "%d\n" "$NUM_NODES"
+
+	for x in $(seq $(($NUM_NODES - 1))); do
+		# x -(random)-> y
+		for y in $(seq $(($x + 1)) $NUM_NODES); do
+			printf "%d %d %d\n" $x $y $((RANDOM % 20))
+		done
+	done
+}
+
+## Generate statistics for 2..NTHREAD_LIMIT threads
+gen_statics() {
+	if [ ! -x ./salesman ]; then
+		printf "\`salesman' not found in $PWD\n" >&2
+		printf "first run \`make'\n" >&2
+		exit 1
+	fi
+
+	for nthreads in $(seq 2 $NTHREAD_LIMIT)
+	do
+		#./salesman -f "$FILE" -t $nthreads -s1
+		time=`./salesman -f "$GRAPH_FILE" -t $nthreads -s1 | sed -n 's#^threaded, time:\(.*\)#\1#p'`
+		printf "%d %.9f\n" $nthreads $time
+	done
+}
+
+# Plot nthreads vs time
+plot() {
+	cat <<EOF | gnuplot --persist >$GRAPH
+set term png
+set style line 1 linecolor rgb '#0060ad' linetype 1 linewidth 2 pointtype 7 pointsize 1.5
+
+plot '$DATA' with linespoints linestyle 1
+EOF
+}
+
+
+main "$@" \
+	&& printf "checking ..." \
+    && check \
+	&& printf "\ngen graph ..." \
+    && gen_graph >$GRAPH_FILE \
+	&& printf "\ngen statictis ..." \
+    && gen_statics >$DATA \
+	&& printf "\nplotting the graph ..." \
+	&& plot >$GRAPH \
+	&& printf "\ndone.\n"

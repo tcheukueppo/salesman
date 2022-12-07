@@ -18,17 +18,17 @@ depth_search(Graph *g, int start_v, int v, int cur_cost, int hop_count, Mcost *m
 	int y;
 	Edgenode *enode = g->edges[v];
 
-	visited[v - 1] = 1;
+	visited[v] = 1;
 	while (enode != NULL) {
 		y = enode->y;
 
-		if (!visited[y - 1]) {
+		if (!visited[y]) {
 			int new_cost;
 
 			if ((new_cost = (cur_cost + enode->w)) < mc->min_cost || mc->min_cost == -1) {
 				node_stack[hop_count] = y;
 				depth_search(g, start_v, y, new_cost, hop_count + 1, mc);
-				visited[y - 1] = 0;
+				visited[y] = 0;
 			}
 		} else if (y == start_v && hop_count == (g->nvertices - 1)) {
 			/* Do we just found another better `mc->min_cost'? */
@@ -57,7 +57,7 @@ tsp_sequential(Graph *g, int start_v)
 	&&  (node_stack = malloc(size)) ))
 	{
 		mc->min_cost = -1;
-		memset(visited, 0, (g->nvertices - 1) * sizeof(int));
+		memset(visited, 0, (g->nvertices + 1) * sizeof(int));
 		depth_search(g, start_v, start_v, 0, 0, mc);
 	} else {
 		malloc_err(STSP_ERR, "tsp_sequential()");
@@ -67,6 +67,6 @@ tsp_sequential(Graph *g, int start_v)
 	}
 
 	free(visited);
-	free(node_stack);
+	//free(node_stack);
 	return mc;
 }

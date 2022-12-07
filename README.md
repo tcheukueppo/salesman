@@ -6,8 +6,5 @@ to different types of architectures and techniques, which are
 
 [Find more documentation here!](https://github.com/tcheukueppo/salesman/tree/master/docs_jpg)
 
-## Sequential processing
-
 ## Distributed processing
-
 
